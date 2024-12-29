@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Grid, Button} from '@mui/material';
+import { Box, Typography, Grid, Button } from '@mui/material';
 import CustomButton from '../../components/button/CustomButton';
 
 // Sample available slots
@@ -34,23 +34,23 @@ export default function Booking() {
 
   const handleDateChange = (day: number) => {
     setSelectedDate(new Date(year, month, day));
-    setSelectedTime(null);
+    setSelectedTime(null); // Reset the time selection when date changes
   };
 
   const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
+    setSelectedTime(time); // Select time slot
   };
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Typography variant="h4" align="center" gutterBottom sx={{ color: '#white', fontWeight: 'bold' }}>
+      <Typography variant="h4" align="center" gutterBottom sx={{ color: '#fff', fontWeight: 'bold' }}>
         Book an Appointment
       </Typography>
       <Grid container spacing={4}>
         {/* Calendar Section */}
         <Grid item xs={12} md={6}>
           <Box sx={{ textAlign: 'center', marginBottom: 2 }}>
-            <Typography variant="h6" sx={{ color: '#white', marginBottom: 2 }}>
+            <Typography variant="h6" sx={{ color: '#fff', marginBottom: 2 }}>
               Select a Date
             </Typography>
             <Grid container spacing={1} justifyContent="center">
@@ -107,6 +107,11 @@ export default function Booking() {
                         backgroundColor: '#eeeeee',
                         borderColor: '#ccc',
                       },
+                      ...(timeSlot === selectedTime && {
+                        backgroundColor: '#388e3c',
+                        color: '#fff',
+                        borderColor: '#388e3c',
+                      }),
                     }}
                     onClick={() => handleTimeSelect(timeSlot)}
                   >

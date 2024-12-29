@@ -155,7 +155,12 @@ export default function ServiceList() {
             ))}
 
             {/* Book Now Button */}
-            <NavLink to="/booking">
+            <NavLink
+              to={{
+                pathname: '/booking',
+                state: { services: cart }, // Passing the selected services to the booking page
+              }}
+            >
               <CustomButton text="Continue" color="secondary" />
             </NavLink>
           </Box>
@@ -164,6 +169,7 @@ export default function ServiceList() {
     </Box>
   );
 }
+
 
 
 
