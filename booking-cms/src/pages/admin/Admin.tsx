@@ -1,4 +1,5 @@
-
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Table,
   TableBody,
@@ -11,11 +12,52 @@ import {
   Box,
 } from "@mui/material";
 
+type Booking = {
+  id: number;
+  service_id: number;
+  customer_name: string; 
+  booking_date: string;
+  booking_time: string;
+};
+
 export default function Admin() {
-  const bookings = [
-    { id: 1, service: "Haircut", customerName: "John Doe", date: "2024-12-25", time: "14:00" },
-    { id: 2, service: "Shampoo", customerName: "Jane Doe", date: "2024-12-26", time: "10:00" },
-  ];
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+  const fetchBookings = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No token found. Please log in.");
+        return;
+      }
+
+      const response = await axios.get<Booking[]>("http://localhost:5001/api/bookings", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Bookings fetched:", response.data); // Debugging line
+      if (Array.isArray(response.data)) {
+        if (response.data.length === 0) {
+          setError("No bookings found.");
+        } else {
+          setBookings(response.data); // Store bookings in state
+          console.log("Bookings state updated:", response.data); // Debugging line
+        }
+      } else {
+        setError("Invalid data format received.");
+      }
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      setError("Error fetching bookings. Please try again later.");
+    }
+  };
+
+  fetchBookings();
+}, []);
 
   return (
     <Box sx={{ padding: 3 }}>
@@ -25,6 +67,7 @@ export default function Admin() {
       <Typography variant="h6" component="h2" gutterBottom>
         All Bookings:
       </Typography>
+      {error && <Typography color="error">{error}</Typography>}
       <TableContainer component={Paper} sx={{ marginTop: 2 }}>
         <Table>
           <TableHead>
@@ -36,18 +79,32 @@ export default function Admin() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {bookings.map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell>{booking.service}</TableCell>
-                <TableCell>{booking.customerName}</TableCell>
-                <TableCell>{booking.date}</TableCell>
-                <TableCell>{booking.time}</TableCell>
+            {bookings.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  No bookings found.
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              bookings.map((booking) => (
+                <TableRow key={booking.id}>
+                <TableCell>{booking.service_id}</TableCell> {/* Assuming service_id maps to a service name */}
+                <TableCell>{booking.customer_name}</TableCell>
+                <TableCell>{booking.booking_date}</TableCell>
+                <TableCell>{booking.booking_time}</TableCell>
+              </TableRow>
+
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
     </Box>
   );
 }
+
+
+
+
+
 

@@ -55,7 +55,8 @@ const getAllBookings = (req, res) => {
       return res.status(404).json({ message: "No bookings found." });
     }
 
-    return res.status(200).json({ bookings: rows });
+    // Return the bookings array directly
+    return res.status(200).json(rows); // No wrapping object, just the array of bookings
   });
 };
 
