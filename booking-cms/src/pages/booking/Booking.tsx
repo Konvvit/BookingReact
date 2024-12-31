@@ -16,6 +16,7 @@ const getDaysInMonth = (month: number, year: number) => {
 export default function Booking() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [isBookingConfirmed, setIsBookingConfirmed] = useState<boolean>(false);
 
   const month = selectedDate.getMonth();
   const year = selectedDate.getFullYear();
@@ -29,12 +30,16 @@ export default function Booking() {
       alert('Please select a time slot');
       return;
     }
+
+    // Simulate booking confirmation
+    setIsBookingConfirmed(true);
     console.log('Booking Details:', { selectedDate, selectedTime });
   };
 
   const handleDateChange = (day: number) => {
     setSelectedDate(new Date(year, month, day));
     setSelectedTime(null); // Reset the time selection when date changes
+    setIsBookingConfirmed(false); // Reset the booking confirmation state when date changes
   };
 
   const handleTimeSelect = (time: string) => {
@@ -133,11 +138,20 @@ export default function Booking() {
                 <CustomButton text="Confirm Booking" type="submit" />
               </Box>
             )}
+
+            {isBookingConfirmed && (
+              <Box sx={{ mt: 3, textAlign: 'center' }}>
+                <Typography variant="h6" color="primary">
+                  Your booking is confirmed for {formattedDate} at {selectedTime}.
+                </Typography>
+              </Box>
+            )}
           </form>
         </Grid>
       </Grid>
     </Box>
   );
 }
+
 
 

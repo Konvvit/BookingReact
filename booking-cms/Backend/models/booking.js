@@ -1,63 +1,34 @@
-// models/booking.js
-
-const db = require("../config/db"); // Ensure to import your database connection
+const { db } = require("../config/db");
 
 const Booking = {
-  // Create a new booking
   create: (
     service_id,
-    date,
-    time,
+    booking_date,
+    booking_time,
     customer_name,
-    customer_contact,
+    customer_phone,
+    customer_email,
     callback
   ) => {
-    const sql = `INSERT INTO Bookings (service_id, date, time, customer_name, customer_contact) 
-                 VALUES (?, ?, ?, ?, ?)`;
-    const params = [service_id, date, time, customer_name, customer_contact];
+    const sql = `
+      INSERT INTO bookings 
+      (service_id, booking_date, booking_time, customer_name, customer_phone, customer_email) 
+      VALUES (?, ?, ?, ?, ?, ?)`;
+
+    const params = [
+      service_id,
+      booking_date,
+      booking_time,
+      customer_name,
+      customer_phone,
+      customer_email,
+    ];
 
     db.run(sql, params, function (err) {
       if (err) {
         return callback(err);
       }
       callback(null, this.lastID); // Return the ID of the newly created booking
-    });
-  },
-
-  // Get all bookings
-  getAll: (callback) => {
-    const sql = "SELECT * FROM Bookings";
-    db.all(sql, [], (err, rows) => {
-      if (err) {
-        return callback(err);
-      }
-      callback(null, rows); // Return all rows in the Bookings table
-    });
-  },
-
-  // Get bookings by service_id and date (to check for conflicts)
-  getByServiceAndDate: (service_id, date, time, callback) => {
-    const sql = `SELECT * FROM Bookings WHERE service_id = ? AND date = ? AND time = ?`;
-    const params = [service_id, date, time];
-
-    db.get(sql, params, (err, row) => {
-      if (err) {
-        return callback(err);
-      }
-      callback(null, row); // Return the booking if found, or null if not
-    });
-  },
-
-  // Get a booking by ID
-  getById: (id, callback) => {
-    const sql = "SELECT * FROM Bookings WHERE id = ?";
-    const params = [id];
-
-    db.get(sql, params, (err, row) => {
-      if (err) {
-        return callback(err);
-      }
-      callback(null, row); // Return the booking by ID
     });
   },
 };

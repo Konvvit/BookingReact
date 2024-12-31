@@ -9,44 +9,48 @@ const Login = () => {
   const navigate = useNavigate();
 
   // Handle form submission
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  console.log('Form submitted', { email, password });
+    console.log('Form submitted', { email, password });
 
-  if (!email || !password) {
-    setError('Both fields are required');
-    return;
-  }
-
-  setError(''); // Clear previous error
-
-  // Send a POST request to the backend login route
-  try {
-const response = await fetch('http://localhost:5001/api/login', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({ email, password }),
-});
-
-    const data = await response.json();
-    console.log('Response from backend:', data);
-
-    if (response.ok) {
-      // Store user info in sessionStorage
-      sessionStorage.setItem("user", JSON.stringify(data));
-      // Redirect to dashboard or home page
-      navigate("/admin");
-    } else {
-      setError(data.error || "Login failed");
+    if (!email || !password) {
+      setError('Both fields are required');
+      return;
     }
-  } catch (err) {
-    setError("An error occurred. Please try again.");
-    console.error('Error during request:', err);
-  }
-};
+
+    setError(''); // Clear previous error
+
+    // Send a POST request to the backend login route
+    try {
+      const response = await fetch('http://localhost:5001/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      console.log('Response from backend:', data);
+
+      if (response.ok) {
+        // Store the JWT token in localStorage (or sessionStorage)
+        localStorage.setItem("token", data.token); // Store the JWT token
+
+        // Optionally, store user info (excluding sensitive data)
+        sessionStorage.setItem("user", JSON.stringify({ email }));
+
+        // Redirect to dashboard or home page
+        navigate("/admin");
+      } else {
+        setError(data.error || "Login failed");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error('Error during request:', err);
+    }
+  };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -90,3 +94,4 @@ const response = await fetch('http://localhost:5001/api/login', {
 };
 
 export default Login;
+

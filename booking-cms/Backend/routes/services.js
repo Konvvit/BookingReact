@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const servicesController = require("../controllers/servicesController");
+const ServicesController = require("../controllers/servicesController");
 
-// Get all services
-router.get("/", servicesController.getAllServices);
+router.get("/", ServicesController.getAllServices); // Adjust accordingly
 
 module.exports = router;

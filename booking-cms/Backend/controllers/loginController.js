@@ -1,35 +1,45 @@
-// controllers/loginController.js
-
 const User = require("../models/user");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+
+const JWT_SECRET = "your_jwt_secret_key"; // Replace this with your secret key
 
 const loginController = {
-  // Register new user
-  register: (req, res) => {
+  login: async (req, res) => {
     const { email, password } = req.body;
+
+    console.log("Login request received with email:", email);
 
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Check if user already exists
-    User.findByEmail(email, (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      if (row) {
-        return res.status(400).json({ error: "User already exists" });
+    try {
+      // Find user by email
+      const user = await User.findByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
       }
 
-      // Create new user
-      User.create(email, password, (err, userId) => {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
-        res
-          .status(201)
-          .json({ id: userId, message: "User registered successfully" });
-      });
-    });
+      // Validate password using bcrypt
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: "Invalid password" });
+      }
+
+      // Create JWT token
+      const token = jwt.sign(
+        { userId: user.id, email: user.email }, // Payload
+        JWT_SECRET, // Secret key
+        { expiresIn: "1h" } // Expiry time
+      );
+
+      // Send response back to client
+      res.status(200).json({ message: "Login successful", token });
+    } catch (error) {
+      console.error("Error processing login:", error); // Log any errors
+      res.status(500).json({ error: "An error occurred during login" });
+    }
   },
 };
 

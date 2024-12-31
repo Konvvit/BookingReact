@@ -1,30 +1,37 @@
-// models/user.js
-
-const db = require("../config/db");
 const bcrypt = require("bcrypt");
-const saltRounds = 10;
+const { db } = require("../config/db"); // Make sure the path to your db is correct
 
-// User Model: Contains the logic for user registration and fetching users.
 const User = {
-  // Method to create a new user
-  create: (email, password, callback) => {
-    bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
-      if (err) return callback(err);
-
+  create: async (email, password) => {
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
       const sql = "INSERT INTO users (email, password) VALUES (?, ?)";
-      const params = [email, hashedPassword];
-      db.run(sql, params, function (err) {
-        if (err) return callback(err);
-        callback(null, this.lastID);
+      return new Promise((resolve, reject) => {
+        db.run(sql, [email, hashedPassword], function (err) {
+          if (err) reject(err);
+          resolve(this.lastID); // Resolve with the last inserted row ID
+        });
       });
-    });
+    } catch (error) {
+      throw new Error("Error creating user: " + error.message);
+    }
   },
 
-  // Method to find a user by email
-  findByEmail: (email, callback) => {
+  findByEmail: async (email) => {
     const sql = "SELECT * FROM users WHERE email = ?";
-    const params = [email];
-    db.get(sql, params, callback);
+    return new Promise((resolve, reject) => {
+      console.log("Executing query:", sql, "with email:", email);
+      const startTime = Date.now(); // Log start time
+      db.get(sql, [email], (err, row) => {
+        const endTime = Date.now(); // Log end time
+        console.log(`Query execution time: ${endTime - startTime}ms`); // Log duration
+        if (err) {
+          console.error("Error executing SQL query:", err);
+          reject(err);
+        }
+        resolve(row);
+      });
+    });
   },
 };
 

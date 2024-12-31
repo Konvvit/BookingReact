@@ -7,6 +7,7 @@ import ServiceList from "./components/servicelist/ServiceList";
 import { AnimatePresence } from "framer-motion";
 import Login from "./pages/login/Login";
 import ProtectedRoute from "./components/protectedroute/ProtectedRoute";
+import ContactForm from "./pages/contactForm/ContactForm";
 
 function App() {
   const location = useLocation();
@@ -29,6 +30,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/service" element={<ServiceList />} />
+             <Route path="/contact" element={<ContactForm />} />
             <Route path="/login" element={<Login />} />
 
             {/* Protected Admin Route */}
