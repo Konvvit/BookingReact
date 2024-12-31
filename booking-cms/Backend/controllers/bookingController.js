@@ -1,5 +1,7 @@
 const Booking = require("../models/booking");
+const { db } = require("../config/db");
 
+// Create a new booking
 const createBooking = (req, res) => {
   const {
     service_id,
@@ -30,7 +32,6 @@ const createBooking = (req, res) => {
     customer_email,
     (err, bookingId) => {
       if (err) {
-        console.error("Error creating booking:", err);
         return res.status(500).json({ error: "Failed to create booking." });
       }
       res
@@ -40,4 +41,22 @@ const createBooking = (req, res) => {
   );
 };
 
-module.exports = { createBooking };
+// Get all bookings (only for logged-in users)
+const getAllBookings = (req, res) => {
+  const sql = "SELECT * FROM bookings"; // Query to get all bookings, no user_id filter
+
+  db.all(sql, [], (err, rows) => {
+    if (err) {
+      console.error("Error fetching bookings:", err);
+      return res.status(500).json({ error: "Failed to fetch bookings." });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ message: "No bookings found." });
+    }
+
+    return res.status(200).json({ bookings: rows });
+  });
+};
+
+module.exports = { createBooking, getAllBookings };
