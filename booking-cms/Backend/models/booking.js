@@ -26,6 +26,7 @@ const Booking = {
 
     db.run(sql, params, function (err) {
       if (err) {
+        console.error("Error in SQL query:", err); // Log the database error
         return callback(err);
       }
       callback(null, this.lastID); // Return the ID of the newly created booking

@@ -13,6 +13,15 @@ const db = new sqlite3.Database(
   }
 );
 
+// Set the busy timeout to 5000 milliseconds (5 seconds)
+db.run("PRAGMA busy_timeout = 10000", (err) => {
+  if (err) {
+    console.error("Error setting busy timeout:", err.message);
+  } else {
+    console.log("Busy timeout set to 5000ms");
+  }
+});
+
 const PORT = 5001; // Ensure that your port is set correctly
 
 // Export the db instance and port for use in other files

@@ -30,6 +30,7 @@ const createBooking = (req, res) => {
     customer_email,
     (err, bookingId) => {
       if (err) {
+        console.error("Error creating booking:", err);
         return res.status(500).json({ error: "Failed to create booking." });
       }
       res
