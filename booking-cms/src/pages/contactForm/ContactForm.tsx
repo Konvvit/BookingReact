@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
-import { Box, TextField, Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, TextField, Typography, Card, CardContent } from '@mui/material';
 import CustomButton from '../../components/button/CustomButton';
 import { useNavigate, useLocation } from 'react-router-dom';
+
+interface Service {
+  id: number;
+  name: string;
+  description: string;
+  price: string;
+}
 
 const ContactForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -12,8 +19,19 @@ const ContactForm: React.FC = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const selectedServices = location.state?.selectedServices || [];
 
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+
+  // Extract services from location state when component mounts
+  useEffect(() => {
+    if (location.state?.services) {
+      setSelectedServices(location.state.services);
+    } else {
+      console.warn('No services passed to ContactForm.');
+    }
+  }, [location.state]);
+
+  // Handle changes in the form fields
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -21,10 +39,11 @@ const ContactForm: React.FC = () => {
     });
   };
 
+  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation to ensure all fields are filled
+    // Basic validation
     if (!formData.name || !formData.email || !formData.phone) {
       alert('Please fill out all fields');
       return;
@@ -42,7 +61,7 @@ const ContactForm: React.FC = () => {
   return (
     <Box
       sx={{
-        maxWidth: '600px',
+        maxWidth: '800px',
         margin: '0 auto',
         padding: 4,
         backgroundColor: '#f9f9f9',
@@ -83,6 +102,27 @@ const ContactForm: React.FC = () => {
           required
           sx={{ marginBottom: 2 }}
         />
+
+        {/* Selected Services Summary */}
+        {selectedServices.length > 0 && (
+          <Box sx={{ marginBottom: 4 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Selected Services:
+            </Typography>
+            {selectedServices.map((service) => (
+              <Card key={service.id} sx={{ marginBottom: 2 }}>
+                <CardContent>
+                  <Typography variant="h6">{service.name}</Typography>
+                  <Typography variant="body2">{service.description}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                    Price: {service.price}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        )}
+
         <Box sx={{ textAlign: 'center', marginTop: 2 }}>
           <CustomButton type="submit" text="Continue" color="primary" />
         </Box>
@@ -92,3 +132,5 @@ const ContactForm: React.FC = () => {
 };
 
 export default ContactForm;
+
+

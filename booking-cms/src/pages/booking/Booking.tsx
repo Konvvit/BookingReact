@@ -1,50 +1,99 @@
 import React, { useState } from 'react';
 import { Box, Typography, Grid, Button } from '@mui/material';
+import axios from 'axios'; // Import axios
 import CustomButton from '../../components/button/CustomButton';
+import { useLocation } from 'react-router-dom';
 
-// Sample available slots
-const availableSlots: { [key: string]: string[] } = {
-  '2024-12-25': ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'],
-  '2024-12-26': ['10:00 AM', '12:00 PM', '2:00 PM'],
+// Dynamic slots for example purposes
+const generateAvailableSlots = () => {
+  const today = new Date();
+  const slots: { [key: string]: string[] } = {};
+
+  for (let i = 0; i < 10; i++) {
+    const date = new Date();
+    date.setDate(today.getDate() + i);
+    const formattedDate = date.toISOString().split('T')[0];
+
+    // Make some days available randomly
+    if (i % 2 === 0) {
+      slots[formattedDate] = ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'];
+    }
+  }
+  return slots;
 };
 
-const getDaysInMonth = (month: number, year: number) => {
-  const daysInMonth = new Date(year, month, 0).getDate();
-  return Array.from({ length: daysInMonth }, (_, i) => i + 1);
-};
+const availableSlots: { [key: string]: string[] } = generateAvailableSlots();
 
-export default function Booking() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+const Booking = () => {
+  const location = useLocation();
+  const { selectedServices, contactInfo } = location.state || {};
+
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isBookingConfirmed, setIsBookingConfirmed] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const month = selectedDate.getMonth();
-  const year = selectedDate.getFullYear();
-  const daysInMonth = getDaysInMonth(month + 1, year);
-
-  const formattedDate = selectedDate.toISOString().split('T')[0];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTime) {
-      alert('Please select a time slot');
-      return;
-    }
-
-    // Simulate booking confirmation
-    setIsBookingConfirmed(true);
-    console.log('Booking Details:', { selectedDate, selectedTime });
-  };
-
-  const handleDateChange = (day: number) => {
-    setSelectedDate(new Date(year, month, day));
-    setSelectedTime(null); // Reset the time selection when date changes
-    setIsBookingConfirmed(false); // Reset the booking confirmation state when date changes
+  const handleDateChange = (date: string) => {
+    setSelectedDate(new Date(date));
+    setSelectedTime(null); // Reset time selection when the date changes
+    setIsBookingConfirmed(false); // Reset confirmation status
   };
 
   const handleTimeSelect = (time: string) => {
-    setSelectedTime(time); // Select time slot
+    setSelectedTime(time);
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+     // Log selectedServices to see its current state
+  console.log("Selected Services:", selectedServices);
+
+    // Validate if services are selected
+    if (!selectedServices || selectedServices.length === 0) {
+      
+      setError("Please select at least one service.");
+      return;
+    }
+
+    // Log selectedDate and selectedTime to see their current state
+  console.log("Selected Date:", selectedDate);
+  console.log("Selected Time:", selectedTime);
+
+    // Validate if date and time are selected
+    if (!selectedDate || !selectedTime) {
+      alert('Please select a date and time.');
+      return;
+    }
+
+    
+
+    const formattedDate = selectedDate.toISOString().split('T')[0];
+    const bookingDetails = {
+      date: formattedDate,
+      time: selectedTime,
+      customerName: contactInfo?.name,
+      customerEmail: contactInfo?.email,
+      customerPhone: contactInfo?.phone,
+      selectedServices: selectedServices,
+    };
+
+    try {
+      console.log("Sending booking details:", bookingDetails);
+      const response = await axios.post('http://localhost:5001/api/bookings', bookingDetails, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      console.log('Booking Response:', response.data);
+      setIsBookingConfirmed(true);
+      setError(null);  // Clear error after successful booking
+    } catch (err) {
+      console.error('Error confirming booking:', err);
+      setError('Failed to confirm the booking. Please try again.');
+    }
+  };
+
+  const formattedDate = selectedDate?.toISOString().split('T')[0];
+  const availableTimes = formattedDate ? availableSlots[formattedDate] : [];
 
   return (
     <Box sx={{ padding: 4 }}>
@@ -52,106 +101,91 @@ export default function Booking() {
         Book an Appointment
       </Typography>
       <Grid container spacing={4}>
-        {/* Calendar Section */}
+        {/* Date Selection */}
         <Grid item xs={12} md={6}>
-          <Box sx={{ textAlign: 'center', marginBottom: 2 }}>
-            <Typography variant="h6" sx={{ color: '#fff', marginBottom: 2 }}>
-              Select a Date
-            </Typography>
-            <Grid container spacing={1} justifyContent="center">
-              {daysInMonth.map((day) => {
-                const dayFormatted = new Date(year, month, day).toISOString().split('T')[0];
-                return (
-                  <Grid item key={day} xs={3} sm={2} md={1}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      sx={{
-                        backgroundColor: availableSlots[dayFormatted] ? '#4caf50' : '#d3d3d3',
-                        color: availableSlots[dayFormatted] ? '#fff' : '#888',
-                        fontSize: '18px',
-                        height: '60px',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        '&:hover': {
-                          backgroundColor: availableSlots[dayFormatted] ? '#388e3c' : '#bdbdbd',
-                        },
-                      }}
-                      onClick={() => handleDateChange(day)}
-                    >
-                      {day}
-                    </Button>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Box>
+          <Typography variant="h6" sx={{ color: '#fff', marginBottom: 2 }}>
+            Select a Date
+          </Typography>
+          <Grid container spacing={2}>
+            {Object.keys(availableSlots).map((date) => (
+              <Grid item key={date} xs={4} sm={3} md={2}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => handleDateChange(date)}
+                  sx={{
+                    backgroundColor: selectedDate?.toISOString().split('T')[0] === date ? '#388e3c' : '#4caf50',
+                    color: '#fff',
+                    '&:hover': { backgroundColor: '#388e3c' },
+                  }}
+                >
+                  {date}
+                </Button>
+              </Grid>
+            ))}
+          </Grid>
         </Grid>
 
-        {/* Time Slot Selection */}
+        {/* Time Selection */}
         <Grid item xs={12} md={6}>
           <form onSubmit={handleSubmit}>
             <Typography variant="h6" sx={{ color: '#555', marginBottom: 2 }}>
-              Available Time Slots for {formattedDate}
+              Available Time Slots for {formattedDate || 'Selected Date'}
             </Typography>
-            {availableSlots[formattedDate] ? (
+            {availableTimes?.length > 0 ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {availableSlots[formattedDate].map((timeSlot, index) => (
+                {availableTimes.map((time) => (
                   <Button
-                    key={index}
+                    key={time}
                     variant="outlined"
                     fullWidth
+                    onClick={() => handleTimeSelect(time)}
                     sx={{
-                      fontSize: '16px',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      backgroundColor: '#f5f5f5',
-                      color: '#333',
-                      border: '2px solid #ddd',
-                      '&:hover': {
-                        backgroundColor: '#eeeeee',
-                        borderColor: '#ccc',
-                      },
-                      ...(timeSlot === selectedTime && {
-                        backgroundColor: '#388e3c',
-                        color: '#fff',
-                        borderColor: '#388e3c',
-                      }),
+                      backgroundColor: selectedTime === time ? '#388e3c' : '#f5f5f5',
+                      color: selectedTime === time ? '#fff' : '#333',
+                      '&:hover': { backgroundColor: selectedTime === time ? '#388e3c' : '#eeeeee' },
                     }}
-                    onClick={() => handleTimeSelect(timeSlot)}
                   >
-                    {timeSlot}
+                    {time}
                   </Button>
                 ))}
               </Box>
             ) : (
-              <Typography variant="body1" color="text.secondary">
-                No available slots for this date.
-              </Typography>
+              <Typography>No available time slots for this date.</Typography>
             )}
-
             {selectedTime && (
-              <Box sx={{ mt: 3, textAlign: 'center' }}>
+              <Box sx={{ mt: 3 }}>
                 <Typography variant="h6" color="primary">
-                  You have selected: {formattedDate} at {selectedTime}
+                  Selected: {formattedDate} at {selectedTime}
                 </Typography>
                 <CustomButton text="Confirm Booking" type="submit" />
-              </Box>
-            )}
-
-            {isBookingConfirmed && (
-              <Box sx={{ mt: 3, textAlign: 'center' }}>
-                <Typography variant="h6" color="primary">
-                  Your booking is confirmed for {formattedDate} at {selectedTime}.
-                </Typography>
               </Box>
             )}
           </form>
         </Grid>
       </Grid>
+
+      {/* Confirmation and Error Messages */}
+      {isBookingConfirmed && (
+        <Typography variant="h6" color="primary" align="center" sx={{ mt: 3 }}>
+          Booking confirmed for {formattedDate} at {selectedTime}.
+        </Typography>
+      )}
+      {error && (
+        <Typography variant="h6" color="error" align="center" sx={{ mt: 3 }}>
+          {error}
+        </Typography>
+      )}
     </Box>
   );
-}
+};
+
+export default Booking;
+
+
+
+
+
 
 
 

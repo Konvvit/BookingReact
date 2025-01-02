@@ -1,9 +1,10 @@
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, Typography, Box, Grid, IconButton } from '@mui/material';
 import CustomButton from '../button/CustomButton';
-import AddIcon from '@mui/icons-material/Add'; // Import Add icon
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'; // Import Delete icon
+import AddIcon from '@mui/icons-material/Add';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { NavLink } from 'react-router-dom';
-import { useState } from 'react'; // Import useState for state management
+import axios from 'axios';
 
 interface Service {
   id: number;
@@ -12,29 +13,39 @@ interface Service {
   price: string;
 }
 
-// Sample services data
-const services: Service[] = [
-  { id: 1, name: 'Haircut', description: 'A stylish haircut', price: '$25' },
-  { id: 2, name: 'Shampoo', description: 'Refreshing shampoo wash', price: '$10' },
-  { id: 3, name: 'Hair Coloring', description: 'Beautiful color for your hair', price: '$40' },
-  { id: 4, name: 'Hair Styling', description: 'Professional styling for any event', price: '$30' },
-];
-
-export default function ServiceList() {
-  // State to keep track of added services in the cart
+const ServiceList: React.FC = () => {
   const [cart, setCart] = useState<Service[]>([]);
-  const [servicesList, setServicesList] = useState<Service[]>(services); // Initial list of services
+  const [servicesList, setServicesList] = useState<Service[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  // Function to add a service to the cart and remove from the available services
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await axios.get('http://localhost:5001/api/services');
+        setServicesList(response.data);
+      } catch (error) {
+        setError('Error fetching services. Please try again later.');
+        console.error('Error fetching services:', error);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
   const addToCart = (service: Service) => {
-    setCart((prevCart) => [...prevCart, service]);
+    setCart((prevCart) => {
+      if (!prevCart.find((item) => item.id === service.id)) {
+        return [...prevCart, service];
+      }
+      return prevCart;
+    });
+
     setServicesList((prevList) => prevList.filter((item) => item.id !== service.id));
   };
 
-  // Function to remove a service from the cart and add it back to the available services
   const removeFromCart = (service: Service) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== service.id)); // Remove from cart
-    setServicesList((prevList) => [...prevList, service]); // Add back to available services
+    setCart((prevCart) => prevCart.filter((item) => item.id !== service.id));
+    setServicesList((prevList) => [...prevList, service]);
   };
 
   return (
@@ -42,6 +53,13 @@ export default function ServiceList() {
       <Typography variant="h4" sx={{ textAlign: 'center', fontWeight: 'bold', mb: 4 }}>
         Our Services
       </Typography>
+
+      {error && (
+        <Typography variant="body1" color="error" sx={{ textAlign: 'center', mb: 4 }}>
+          {error}
+        </Typography>
+      )}
+
       <Grid container spacing={4}>
         <Grid item xs={12} md={8}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -53,7 +71,6 @@ export default function ServiceList() {
                   transition: 'transform 0.2s, opacity 0.2s',
                   '&:hover': { transform: 'scale(1.05)', boxShadow: 6 },
                   position: 'relative',
-                  opacity: 1, // Initially fully visible
                 }}
               >
                 <CardContent>
@@ -67,7 +84,6 @@ export default function ServiceList() {
                     Price: {service.price}
                   </Typography>
 
-                  {/* Add Icon button */}
                   <IconButton
                     sx={{
                       position: 'absolute',
@@ -76,7 +92,7 @@ export default function ServiceList() {
                       backgroundColor: 'white',
                       '&:hover': { backgroundColor: 'grey.200' },
                     }}
-                    onClick={() => addToCart(service)} // Add service to cart
+                    onClick={() => addToCart(service)}
                   >
                     <AddIcon />
                   </IconButton>
@@ -86,7 +102,6 @@ export default function ServiceList() {
           </Box>
         </Grid>
 
-        {/* Cart Box */}
         <Grid item xs={12} md={4}>
           <Box
             sx={{
@@ -112,18 +127,17 @@ export default function ServiceList() {
               Cart
             </Typography>
 
-            {/* Render added service cards inside the cart */}
-            {cart.map((service, index) => (
+            {cart.map((service) => (
               <Card
-                key={index}
+                key={service.id}
                 sx={{
                   marginBottom: 2,
                   width: '100%',
                   boxShadow: 2,
-                  opacity: 1, // Initially fully visible
+                  opacity: 1,
                   position: 'relative',
                   transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': { transform: 'scale(1.05)', boxShadow: 6 }, // Hover effect for cards in cart
+                  '&:hover': { transform: 'scale(1.05)', boxShadow: 6 },
                 }}
               >
                 <CardContent>
@@ -137,7 +151,6 @@ export default function ServiceList() {
                     Price: {service.price}
                   </Typography>
 
-                  {/* Delete Icon button */}
                   <IconButton
                     sx={{
                       position: 'absolute',
@@ -146,7 +159,7 @@ export default function ServiceList() {
                       backgroundColor: 'white',
                       '&:hover': { backgroundColor: 'grey.200' },
                     }}
-                    onClick={() => removeFromCart(service)} // Remove service from cart
+                    onClick={() => removeFromCart(service)}
                   >
                     <DeleteOutlineIcon />
                   </IconButton>
@@ -154,12 +167,10 @@ export default function ServiceList() {
               </Card>
             ))}
 
-            {/* Book Now Button */}
-             <NavLink
-              to={{
-                pathname: '/contact',
-                state: { services: cart }, // Passing the selected services to the booking page
-              }}
+            <NavLink
+              to={{ pathname: '/contact' }}
+              state={{ services: cart }}
+              style={{ textDecoration: 'none' }}
             >
               <CustomButton text="Continue" color="secondary" />
             </NavLink>
@@ -168,7 +179,18 @@ export default function ServiceList() {
       </Grid>
     </Box>
   );
-}
+};
+
+export default ServiceList;
+
+
+
+
+
+
+
+
+
 
 
 
