@@ -4,6 +4,7 @@ import axios from 'axios'; // Import axios
 import CustomButton from '../../components/button/CustomButton';
 import { useLocation } from 'react-router-dom';
 
+
 // Dynamic slots for example purposes
 const generateAvailableSlots = () => {
   const today = new Date();
@@ -58,8 +59,14 @@ const handleSubmit = async (e: React.FormEvent) => {
     return;
   }
 
+  interface Service {
+  id: number;
+  name: string;
+  price: number;
+}
+
   // Format the payload to match the backend's expected structure
-  const serviceIds = selectedServices.map((service) => service.id); // Extract service IDs
+  const serviceIds = selectedServices.map((service: Service) => service.id); // Extract service IDs
   const formattedDate = selectedDate.toISOString().split("T")[0];
 
   const bookingDetails = {
