@@ -43,54 +43,47 @@ const Booking = () => {
     setSelectedTime(time);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-     // Log selectedServices to see its current state
-  console.log("Selected Services:", selectedServices);
+  // Validate if services are selected
+  if (!selectedServices || selectedServices.length === 0) {
+    setError("Please select at least one service.");
+    return;
+  }
 
-    // Validate if services are selected
-    if (!selectedServices || selectedServices.length === 0) {
-      
-      setError("Please select at least one service.");
-      return;
-    }
+  // Validate if date and time are selected
+  if (!selectedDate || !selectedTime) {
+    alert("Please select a date and time.");
+    return;
+  }
 
-    // Log selectedDate and selectedTime to see their current state
-  console.log("Selected Date:", selectedDate);
-  console.log("Selected Time:", selectedTime);
+  // Format the payload to match the backend's expected structure
+  const serviceIds = selectedServices.map((service) => service.id); // Extract service IDs
+  const formattedDate = selectedDate.toISOString().split("T")[0];
 
-    // Validate if date and time are selected
-    if (!selectedDate || !selectedTime) {
-      alert('Please select a date and time.');
-      return;
-    }
-
-    
-
-    const formattedDate = selectedDate.toISOString().split('T')[0];
-    const bookingDetails = {
-      date: formattedDate,
-      time: selectedTime,
-      customerName: contactInfo?.name,
-      customerEmail: contactInfo?.email,
-      customerPhone: contactInfo?.phone,
-      selectedServices: selectedServices,
-    };
-
-    try {
-      console.log("Sending booking details:", bookingDetails);
-      const response = await axios.post('http://localhost:5001/api/bookings', bookingDetails, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      console.log('Booking Response:', response.data);
-      setIsBookingConfirmed(true);
-      setError(null);  // Clear error after successful booking
-    } catch (err) {
-      console.error('Error confirming booking:', err);
-      setError('Failed to confirm the booking. Please try again.');
-    }
+  const bookingDetails = {
+    services: serviceIds,
+    booking_date: formattedDate,
+    booking_time: selectedTime,
+    customer_name: contactInfo?.name,
+    customer_email: contactInfo?.email,
+    customer_phone: contactInfo?.phone,
   };
+
+  try {
+    console.log("Sending booking details:", bookingDetails);
+    const response = await axios.post("http://localhost:5001/api/bookings", bookingDetails, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    console.log("Booking Response:", response.data);
+    setIsBookingConfirmed(true);
+    setError(null); // Clear error after successful booking
+  } catch (err) {
+    console.error("Error confirming booking:", err);
+    setError("Failed to confirm the booking. Please try again.");
+  }
+};
 
   const formattedDate = selectedDate?.toISOString().split('T')[0];
   const availableTimes = formattedDate ? availableSlots[formattedDate] : [];
