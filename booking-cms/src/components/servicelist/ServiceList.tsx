@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Box, Grid, IconButton } from '@mui/material';
-import CustomButton from '../button/CustomButton';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { NavLink } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { Box, Typography, Grid } from "@mui/material";
+import ServiceCard from "./ServiceCard";
+import CustomButton from "../button/CustomButton";
+import { NavLink } from "react-router-dom";
+import { fetchServices } from "../../helpers/api";
 
 interface Service {
   id: number;
@@ -14,35 +13,33 @@ interface Service {
 }
 
 const ServiceList: React.FC = () => {
-  const [cart, setCart] = useState<Service[]>([]);
   const [servicesList, setServicesList] = useState<Service[]>([]);
+  const [cart, setCart] = useState<Service[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch services on component mount
   useEffect(() => {
-    const fetchServices = async () => {
+    const loadServices = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/services');
-        setServicesList(response.data);
-      } catch (error) {
-        setError('Error fetching services. Please try again later.');
-        console.error('Error fetching services:', error);
+        const services = await fetchServices();
+        setServicesList(services);
+      } catch (err) {
+        setError("Error fetching services. Please try again later.");
       }
     };
 
-    fetchServices();
+    loadServices();
   }, []);
 
+  // Add service to the cart
   const addToCart = (service: Service) => {
-    setCart((prevCart) => {
-      if (!prevCart.find((item) => item.id === service.id)) {
-        return [...prevCart, service];
-      }
-      return prevCart;
-    });
-
-    setServicesList((prevList) => prevList.filter((item) => item.id !== service.id));
+    setCart((prevCart) => [...prevCart, service]);
+    setServicesList((prevList) =>
+      prevList.filter((item) => item.id !== service.id)
+    );
   };
 
+  // Remove service from the cart
   const removeFromCart = (service: Service) => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== service.id));
     setServicesList((prevList) => [...prevList, service]);
@@ -50,77 +47,46 @@ const ServiceList: React.FC = () => {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" sx={{ textAlign: 'center', fontWeight: 'bold', mb: 4 }}>
+      <Typography variant="h4" sx={{ textAlign: "center", fontWeight: "bold", mb: 4 }}>
         Our Services
       </Typography>
 
       {error && (
-        <Typography variant="body1" color="error" sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="body1" color="error" sx={{ textAlign: "center", mb: 4 }}>
           {error}
         </Typography>
       )}
 
-      <Grid container spacing={4}>
+      <Grid container spacing={8}>
+        {/* Service List */}
         <Grid item xs={12} md={8}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {servicesList.map((service) => (
-              <Card
-                key={service.id}
-                sx={{
-                  boxShadow: 3,
-                  transition: 'transform 0.2s, opacity 0.2s',
-                  '&:hover': { transform: 'scale(1.05)', boxShadow: 6 },
-                  position: 'relative',
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>
-                    {service.name}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 2 }}>
-                    {service.description}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Price: {service.price}
-                  </Typography>
-
-                  <IconButton
-                    sx={{
-                      position: 'absolute',
-                      top: 10,
-                      right: 10,
-                      backgroundColor: 'white',
-                      '&:hover': { backgroundColor: 'grey.200' },
-                    }}
-                    onClick={() => addToCart(service)}
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </CardContent>
-              </Card>
+              <ServiceCard key={service.id} service={service} onAdd={addToCart} />
             ))}
           </Box>
         </Grid>
 
+        {/* Cart */}
         <Grid item xs={12} md={4}>
           <Box
             sx={{
-              position: 'sticky',
+              position: "sticky",
               top: 20,
-              height: 700,
-              width: '100%',
-              minWidth: 400,
-              maxWidth: 600,
-              bgcolor: 'error.main',
-              color: 'white',
+              height: "auto", // Adjust height dynamically based on content
+              maxHeight: 700, // Optional: Set a max height for scrolling
+              width: "100%", // Use full width of the column
+              minWidth: 500, // Ensure a minimum width
+              maxWidth: 600, // Optionally limit the max width
+              bgcolor: "error.main",
+              color: "white",
               borderRadius: 2,
               boxShadow: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
               p: 3,
+              display: "flex",
+              flexDirection: "column", // Stack items vertically
+              gap: 2, // Add spacing between children
+              overflowY: "auto", // Add scrolling for overflowing content
             }}
           >
             <Typography variant="h5" sx={{ mb: 2 }}>
@@ -128,49 +94,18 @@ const ServiceList: React.FC = () => {
             </Typography>
 
             {cart.map((service) => (
-              <Card
+              <ServiceCard
                 key={service.id}
-                sx={{
-                  marginBottom: 2,
-                  width: '100%',
-                  boxShadow: 2,
-                  opacity: 1,
-                  position: 'relative',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': { transform: 'scale(1.05)', boxShadow: 6 },
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>
-                    {service.name}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 2 }}>
-                    {service.description}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Price: {service.price}
-                  </Typography>
-
-                  <IconButton
-                    sx={{
-                      position: 'absolute',
-                      top: 10,
-                      right: 10,
-                      backgroundColor: 'white',
-                      '&:hover': { backgroundColor: 'grey.200' },
-                    }}
-                    onClick={() => removeFromCart(service)}
-                  >
-                    <DeleteOutlineIcon />
-                  </IconButton>
-                </CardContent>
-              </Card>
+                service={service}
+                onRemove={removeFromCart}
+                isCartItem
+              />
             ))}
 
             <NavLink
-              to={{ pathname: '/contact' }}
+              to={{ pathname: "/contact" }}
               state={{ services: cart }}
-              style={{ textDecoration: 'none' }}
+              style={{ textDecoration: "none" }}
             >
               <CustomButton text="Continue" color="secondary" />
             </NavLink>
@@ -182,6 +117,7 @@ const ServiceList: React.FC = () => {
 };
 
 export default ServiceList;
+
 
 
 
