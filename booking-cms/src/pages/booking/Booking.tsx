@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Box, Typography, Grid, Button } from '@mui/material';
-import axios from 'axios'; // Import axios
-import CustomButton from '../../components/button/CustomButton';
-import { useLocation } from 'react-router-dom';
+import React, { useState } from "react";
+import { Box, Typography, Grid, Button } from "@mui/material";
+import CustomButton from "../../components/button/CustomButton";
+import { useLocation } from "react-router-dom";
+import { createBooking } from "../../helpers/api"; 
+import axios from "axios";
 
-
-// Dynamic slots for example purposes
+// Generate dynamic time slots
 const generateAvailableSlots = () => {
   const today = new Date();
   const slots: { [key: string]: string[] } = {};
@@ -13,11 +13,10 @@ const generateAvailableSlots = () => {
   for (let i = 0; i < 10; i++) {
     const date = new Date();
     date.setDate(today.getDate() + i);
-    const formattedDate = date.toISOString().split('T')[0];
+    const formattedDate = date.toISOString().split("T")[0];
 
-    // Make some days available randomly
     if (i % 2 === 0) {
-      slots[formattedDate] = ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'];
+      slots[formattedDate] = ["9:00 AM", "11:00 AM", "1:00 PM", "3:00 PM"];
     }
   }
   return slots;
@@ -25,7 +24,7 @@ const generateAvailableSlots = () => {
 
 const availableSlots: { [key: string]: string[] } = generateAvailableSlots();
 
-const Booking = () => {
+const Booking: React.FC = () => {
   const location = useLocation();
   const { selectedServices, contactInfo } = location.state || {};
 
@@ -34,76 +33,81 @@ const Booking = () => {
   const [isBookingConfirmed, setIsBookingConfirmed] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Handle date selection
   const handleDateChange = (date: string) => {
     setSelectedDate(new Date(date));
-    setSelectedTime(null); // Reset time selection when the date changes
-    setIsBookingConfirmed(false); // Reset confirmation status
+    setSelectedTime(null);
+    setIsBookingConfirmed(false);
+    setError(null); // Clear any previous error
   };
 
+  // Handle time selection
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
+    setError(null); // Clear any previous error
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  // Validate if services are selected
-  if (!selectedServices || selectedServices.length === 0) {
-    setError("Please select at least one service.");
-    return;
-  }
+    if (!selectedServices || selectedServices.length === 0) {
+      setError("Please select at least one service.");
+      return;
+    }
 
-  // Validate if date and time are selected
-  if (!selectedDate || !selectedTime) {
-    alert("Please select a date and time.");
-    return;
-  }
+    if (!selectedDate || !selectedTime) {
+      setError("Please select both a date and a time.");
+      return;
+    }
 
-  interface Service {
-  id: number;
-  name: string;
-  price: number;
-}
+    const serviceIds = selectedServices.map((service: { id: number }) => service.id);
+    const formattedDate = selectedDate.toISOString().split("T")[0];
 
-  // Format the payload to match the backend's expected structure
-  const serviceIds = selectedServices.map((service: Service) => service.id); // Extract service IDs
-  const formattedDate = selectedDate.toISOString().split("T")[0];
+    const bookingDetails = {
+      services: serviceIds,
+      booking_date: formattedDate,
+      booking_time: selectedTime,
+      customer_name: contactInfo?.name,
+      customer_email: contactInfo?.email,
+      customer_phone: contactInfo?.phone,
+    };
 
-  const bookingDetails = {
-    services: serviceIds,
-    booking_date: formattedDate,
-    booking_time: selectedTime,
-    customer_name: contactInfo?.name,
-    customer_email: contactInfo?.email,
-    customer_phone: contactInfo?.phone,
-  };
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("You must be logged in to book.");
+        return;
+      }
 
-  try {
-    console.log("Sending booking details:", bookingDetails);
-    const response = await axios.post("http://localhost:5001/api/bookings", bookingDetails, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    });
-    console.log("Booking Response:", response.data);
+      console.log("Sending booking details:", bookingDetails);
+    const response = await createBooking(bookingDetails, token);
+    console.log("Booking Response:", response);
     setIsBookingConfirmed(true);
-    setError(null); // Clear error after successful booking
-  } catch (err) {
-    console.error("Error confirming booking:", err);
-    setError("Failed to confirm the booking. Please try again.");
+    setError(null);
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      console.error("Axios error confirming booking:", err.response?.data || err.message);
+      setError(err.response?.data?.error || "Failed to create booking. Please try again.");
+    } else {
+      console.error("Unexpected error:", err);
+      setError("An unexpected error occurred. Please try again.");
+    }
   }
 };
 
-  const formattedDate = selectedDate?.toISOString().split('T')[0];
+  const formattedDate = selectedDate?.toISOString().split("T")[0];
   const availableTimes = formattedDate ? availableSlots[formattedDate] : [];
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Typography variant="h4" align="center" gutterBottom sx={{ color: '#fff', fontWeight: 'bold' }}>
+      <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: "bold" }}>
         Book an Appointment
       </Typography>
       <Grid container spacing={4}>
         {/* Date Selection */}
         <Grid item xs={12} md={6}>
-          <Typography variant="h6" sx={{ color: '#fff', marginBottom: 2 }}>
+          <Typography variant="h6" sx={{ marginBottom: 2 }}>
             Select a Date
           </Typography>
           <Grid container spacing={2}>
@@ -114,9 +118,12 @@ const handleSubmit = async (e: React.FormEvent) => {
                   fullWidth
                   onClick={() => handleDateChange(date)}
                   sx={{
-                    backgroundColor: selectedDate?.toISOString().split('T')[0] === date ? '#388e3c' : '#4caf50',
-                    color: '#fff',
-                    '&:hover': { backgroundColor: '#388e3c' },
+                    backgroundColor:
+                      selectedDate?.toISOString().split("T")[0] === date
+                        ? "#388e3c"
+                        : "#4caf50",
+                    color: "#fff",
+                    "&:hover": { backgroundColor: "#388e3c" },
                   }}
                 >
                   {date}
@@ -129,11 +136,11 @@ const handleSubmit = async (e: React.FormEvent) => {
         {/* Time Selection */}
         <Grid item xs={12} md={6}>
           <form onSubmit={handleSubmit}>
-            <Typography variant="h6" sx={{ color: '#555', marginBottom: 2 }}>
-              Available Time Slots for {formattedDate || 'Selected Date'}
+            <Typography variant="h6" sx={{ marginBottom: 2 }}>
+              Available Time Slots for {formattedDate || "Selected Date"}
             </Typography>
-            {availableTimes?.length > 0 ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {availableTimes.length > 0 ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {availableTimes.map((time) => (
                   <Button
                     key={time}
@@ -141,9 +148,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                     fullWidth
                     onClick={() => handleTimeSelect(time)}
                     sx={{
-                      backgroundColor: selectedTime === time ? '#388e3c' : '#f5f5f5',
-                      color: selectedTime === time ? '#fff' : '#333',
-                      '&:hover': { backgroundColor: selectedTime === time ? '#388e3c' : '#eeeeee' },
+                      backgroundColor: selectedTime === time ? "#388e3c" : "#f5f5f5",
+                      color: selectedTime === time ? "#fff" : "#333",
+                      "&:hover": {
+                        backgroundColor: selectedTime === time ? "#388e3c" : "#eeeeee",
+                      },
                     }}
                   >
                     {time}
@@ -181,6 +190,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 };
 
 export default Booking;
+
+
 
 
 

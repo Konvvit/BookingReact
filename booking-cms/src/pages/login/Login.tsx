@@ -1,54 +1,40 @@
-import React, { useState } from 'react';
-import { TextField, Button, Box, Typography, Container, Paper } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { TextField, Button, Box, Typography, Container, Paper } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { loginUser } from "../../helpers/api"; 
+import { LoginError } from "../../helpers/types";
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+const Login: React.FC = () => {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const navigate = useNavigate();
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('Form submitted', { email, password });
-
     if (!email || !password) {
-      setError('Both fields are required');
+      setError("Both fields are required");
       return;
     }
 
-    setError(''); // Clear previous error
+    setError(""); // Clear any existing errors
 
-    // Send a POST request to the backend login route
     try {
-      const response = await fetch('http://localhost:5001/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await loginUser(email, password); // Call the centralized API function
+      console.log("Response from backend:", data);
 
-      const data = await response.json();
-      console.log('Response from backend:', data);
+      // Store the JWT token and user information
+      localStorage.setItem("token", data.token); // Save JWT token
+      sessionStorage.setItem("user", JSON.stringify({ email })); // Save user email
 
-      if (response.ok) {
-        // Store the JWT token in localStorage (or sessionStorage)
-        localStorage.setItem("token", data.token); // Store the JWT token
-
-        // Optionally, store user info (excluding sensitive data)
-        sessionStorage.setItem("user", JSON.stringify({ email }));
-
-        // Redirect to dashboard or home page
-        navigate("/admin");
-      } else {
-        setError(data.error || "Login failed");
-      }
+      // Redirect to the admin panel
+      navigate("/admin");
     } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error('Error during request:', err);
+      const loginError = err as LoginError;
+      setError(loginError.error || "Login failed. Please try again.");
+      console.error("Login error:", loginError);
     }
   };
 
@@ -59,7 +45,7 @@ const Login = () => {
           Login
         </Typography>
         <form onSubmit={handleSubmit}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               label="Email"
               variant="outlined"
@@ -94,4 +80,5 @@ const Login = () => {
 };
 
 export default Login;
+
 

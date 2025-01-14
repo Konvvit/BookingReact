@@ -4,13 +4,9 @@ import ServiceCard from "./ServiceCard";
 import CustomButton from "../button/CustomButton";
 import { NavLink } from "react-router-dom";
 import { fetchServices } from "../../helpers/api";
+import { Service } from "../../helpers/types";
 
-interface Service {
-  id: number;
-  name: string;
-  description: string;
-  price: string;
-}
+
 
 const ServiceList: React.FC = () => {
   const [servicesList, setServicesList] = useState<Service[]>([]);
@@ -18,18 +14,18 @@ const ServiceList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch services on component mount
-  useEffect(() => {
-    const loadServices = async () => {
-      try {
-        const services = await fetchServices();
-        setServicesList(services);
-      } catch (err) {
-        setError("Error fetching services. Please try again later.");
-      }
-    };
+ useEffect(() => {
+  const loadServices = async () => {
+    try {
+      const services = await fetchServices();
+      setServicesList(services);
+    } catch {
+      setError("Error fetching services. Please try again later.");
+    }
+  };
 
-    loadServices();
-  }, []);
+  loadServices();
+}, []);
 
   // Add service to the cart
   const addToCart = (service: Service) => {

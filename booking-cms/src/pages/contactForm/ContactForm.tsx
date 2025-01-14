@@ -2,13 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Box, TextField, Typography, Card, CardContent } from '@mui/material';
 import CustomButton from '../../components/button/CustomButton';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Service } from "../../helpers/types";
 
-interface Service {
-  id: number;
-  name: string;
-  description: string;
-  price: string;
-}
 
 const ContactForm: React.FC = () => {
   const [formData, setFormData] = useState({

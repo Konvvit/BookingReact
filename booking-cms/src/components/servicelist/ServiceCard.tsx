@@ -2,20 +2,9 @@ import React from "react";
 import { Card, CardContent, Typography, IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import { ServiceCardProps } from "../../helpers/types";
 
-interface Service {
-  id: number;
-  name: string;
-  description: string;
-  price: string;
-}
 
-interface ServiceCardProps {
-  service: Service;
-  onAdd?: (service: Service) => void;
-  onRemove?: (service: Service) => void;
-  isCartItem?: boolean;
-}
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
   service,
