@@ -69,24 +69,24 @@ const ServiceList: React.FC = () => {
             sx={{
               position: "sticky",
               top: 20,
-              height: "auto", // Adjust height dynamically based on content
-              maxHeight: 700, // Optional: Set a max height for scrolling
-              width: "100%", // Use full width of the column
-              minWidth: 500, // Ensure a minimum width
-              maxWidth: 600, // Optionally limit the max width
-              bgcolor: "error.main",
+              height: "auto", 
+              maxHeight: 700, 
+              width: "100%", 
+              minWidth: 500, 
+              maxWidth: 600, 
+              bgcolor: "White",
               color: "white",
               borderRadius: 2,
               boxShadow: 3,
               p: 3,
               display: "flex",
-              flexDirection: "column", // Stack items vertically
-              gap: 2, // Add spacing between children
-              overflowY: "auto", // Add scrolling for overflowing content
+              flexDirection: "column", 
+              gap: 2, 
+              overflowY: "auto", 
             }}
           >
-            <Typography variant="h5" sx={{ mb: 2 }}>
-              Cart
+            <Typography variant="h5" sx={{ mb: 2, color: "black" }}>
+                Cart
             </Typography>
 
             {cart.map((service) => (

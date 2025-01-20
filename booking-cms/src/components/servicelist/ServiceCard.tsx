@@ -20,6 +20,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         position: "relative",
         transition: "transform 0.2s, box-shadow 0.2s",
         "&:hover": { transform: "scale(1.05)", boxShadow: 6 },
+        backgroundColor: isCartItem ? "white" : "lightgrey",
       }}
     >
       <CardContent>
