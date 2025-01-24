@@ -19,7 +19,7 @@ const Login: React.FC = () => {
       return;
     }
 
-    setError(""); // Clear any existing errors
+    setError(""); 
 
     try {
       const data = await loginUser(email, password); // Call the centralized API function
